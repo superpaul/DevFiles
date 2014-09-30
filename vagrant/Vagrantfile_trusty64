@@ -6,29 +6,37 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-    
-    nodes = [{:vm_name => :node-1, :network_ip => "192.168.56.50"},
-             {:vm_name => :node-2, :network_ip => "192.168.56.51"},
-             {:vm_name => :node-3, :network_ip => "192.168.56.52"},
-             {:vm_name => :node-4, :network_ip => "192.168.56.53"},
-             {:vm_name => :node-5, :network_ip => "192.168.56.54"}]
+   
+    nodes_config = {:limit           => 1,
+                    :ip_addr_base    => "192.168.56.",
+                    :ip_addr_start   => "50",
+                    :hostname_prefix => "node-",
+                    :vm_prefix       => "riak-",
+                    :vm_box          => "ubuntu/trusty64",
+                    :vm_box_url      => "https://vagrantcloud.com/ubuntu/boxes/trusty64/versions/1/providers/virtualbox.box"}
 
-    nodes.each do |node|
+    # Create Instances
+    1.upto(nodes_config[:limit]) do |i|
+        
+        vm_name  = "#{nodes_config[:vm_prefix]}#{i}"
+        hostname = "#{nodes_config[:hostname_prefix]}#{i}"
+        ip_addr  = "#{nodes_config[:ip_addr_base]}#{(nodes_config[:ip_addr_start].to_i + i)}"
 
-        config.vm.define node[:vm_name] do |node_config|
+        config.vm.define vm_name do |node_config|
 
             # Base Settings
-            node_config.vm.box = "ubuntu/trusty64"
-            node_config.vm.box_url = "https://vagrantcloud.com/ubuntu/boxes/trusty64/versions/1/providers/virtualbox.box"
+            node_config.vm.box     = nodes_config[:vm_box]
+            node_config.vm.box_url = nodes_config[:vm_box_url]
 
             # Instance Settings
-            node_config.vm.hostname = node[:vm_name]
-            node_config.vm.network "private_network", ip: node[:network_ip]
+            node_config.vm.hostname = hostname
+            node_config.vm.network "private_network", ip: ip_addr
 
             node_config.ssh.forward_agent = true
 
             # VirtualBox Settings
             node_config.vm.provider "virtualbox" do |vbox|
+                vbox.name = vm_name
                 vbox.customize ["modifyvm", :id, "--memory", "1024"]
             end
         end 
