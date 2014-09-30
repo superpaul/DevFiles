@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# @superpaul basic VagrantFile to spin up instance with default settings
+# now using ubuntu/trusty64 
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    
+    nodes = [{:vm_name => :node-1, :network_ip => "192.168.56.50"},
+             {:vm_name => :node-2, :network_ip => "192.168.56.51"},
+             {:vm_name => :node-3, :network_ip => "192.168.56.52"},
+             {:vm_name => :node-4, :network_ip => "192.168.56.53"},
+             {:vm_name => :node-5, :network_ip => "192.168.56.54"}]
+
+    nodes.each do |node|
+
+        config.vm.define node[:vm_name] do |node_config|
+
+            # Base Settings
+            node_config.vm.box = "ubuntu/trusty64"
+            node_config.vm.box_url = "https://vagrantcloud.com/ubuntu/boxes/trusty64/versions/1/providers/virtualbox.box"
+
+            # Instance Settings
+            node_config.vm.hostname = node[:vm_name]
+            node_config.vm.network "private_network", ip: node[:network_ip]
+
+            node_config.ssh.forward_agent = true
+
+            # VirtualBox Settings
+            node_config.vm.provider "virtualbox" do |vbox|
+                vbox.customize ["modifyvm", :id, "--memory", "1024"]
+            end
+        end 
+    end
+  
+end
