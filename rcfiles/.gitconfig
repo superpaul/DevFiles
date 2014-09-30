@@ -1,0 +1,25 @@
+[user]
+    user = Paul Villacorta
+    email = pwvillacorta@gmail.com
+[core]
+    editor = vim
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+[push]
+    default = simple
+[color]
+    ui = auto
+[remote "origin"]
+	url = git@github.com:superpaul/DevFiles.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
+
+### more config
+### https://gist.github.com/pksunkara/988716
+###
