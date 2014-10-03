@@ -1,0 +1,63 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# @superpaul basic VagrantFile to spin up instance with default settings
+# now using ubuntu/trusty64 
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+   
+    nodes_config = {:limit            => 1,
+                    :ip_addr_base     => "192.168.56.",
+                    :ip_addr_start    => "50",
+                    :hostname_prefix  => "node-",
+                    :vm_prefix        => "riak-",
+                    :vm_box           => "ubuntu/trusty64",
+                    :vm_box_url       => "https://vagrantcloud.com/ubuntu/boxes/trusty64/versions/1/providers/virtualbox.box",
+                    :files_spath      => "files/",
+                    :files_dpath      => "/tmp/",
+                    :files            => ["riak.conf.min", "riak.sysctl.conf", "riak.sysctl_10gb.conf"] }
+
+    # Create Instances
+    1.upto(nodes_config[:limit]) do |i|
+        
+        vm_name  = "#{nodes_config[:vm_prefix]}#{i}"
+        hostname = "#{nodes_config[:hostname_prefix]}#{i}"
+        ip_addr  = "#{nodes_config[:ip_addr_base]}#{(nodes_config[:ip_addr_start].to_i + i)}"
+
+        config.vm.define vm_name do |node_config|
+
+            # Base Settings
+            node_config.vm.box     = nodes_config[:vm_box]
+            node_config.vm.box_url = nodes_config[:vm_box_url]
+
+            # Instance Settings
+            node_config.vm.hostname = hostname
+            node_config.vm.network "private_network", ip: ip_addr
+
+            node_config.ssh.forward_agent = true
+
+            # VirtualBox Settings
+            node_config.vm.provider "virtualbox" do |vbox|
+                vbox.name = vm_name
+                vbox.customize ["modifyvm", :id, "--memory", "1024"]
+            end
+
+            # Copy riak specific files
+            nodes_config[:files].each do |file|
+                src = "#{nodes_config[:files_spath]}#{file}"
+                dst = "#{nodes_config[:files_dpath]}#{file}"
+                node_config.vm.provision "file", source: src, destination: dst
+            end
+
+            # Puppet Apply
+            node_config.vm.provision "puppet" do |puppet|
+                puppet.manifests_path = "manifests"
+                puppet.manifest_file = "riak.pp"
+                puppet.options = "--verbose"
+            end
+
+        end 
+    end
+  
+end
